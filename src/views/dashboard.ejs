@@ -1,0 +1,37 @@
+<%- include('partials/header', { title }) %>
+
+<section class="hero">
+  <div>
+    <span class="eyebrow">Panel principal</span>
+    <h1>Hola, <%= user.name.split(' ')[0] %></h1>
+    <p>Consulta el estado general y accede a las funciones disponibles para tu rol.</p>
+  </div>
+  <% if (['CAJERO', 'ADMINISTRADOR'].includes(user.role)) { %>
+    <a class="btn primary big" href="/pdv">Nueva venta →</a>
+  <% } %>
+</section>
+
+<section class="stats">
+  <article><span>Productos activos</span><strong><%= stats.products %></strong></article>
+  <article><span>Stock bajo</span><strong class="warn"><%= stats.lowStock %></strong></article>
+  <article><span>Ventas válidas</span><strong><%= stats.sales %></strong></article>
+  <article><span>Cancelaciones</span><strong><%= stats.cancelled %></strong></article>
+</section>
+
+<section class="panel">
+  <h2>Accesos rápidos</h2>
+  <div class="quick-grid">
+    <% if (['CAJERO', 'ADMINISTRADOR'].includes(user.role)) { %>
+      <a href="/pdv"><b>▣</b><span>Registrar venta<small>Crear un ticket y descontar existencias</small></span></a>
+    <% } %>
+    <a href="/ventas"><b>⌕</b><span>Historial de ventas<small>Consultar folios y detalles</small></span></a>
+    <% if (['GERENTE', 'ADMINISTRADOR'].includes(user.role)) { %>
+      <a href="/productos"><b>◇</b><span>Inventario<small>Productos, estados y existencias</small></span></a>
+    <% } %>
+    <% if (user.role === 'GERENTE') { %>
+      <a href="/usuarios"><b>◎</b><span>Empleados<small>Cuentas, roles y accesos</small></span></a>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,37 @@
+<%- include('../partials/header', { title }) %>
+
+<div class="page-head">
+  <div><span class="eyebrow">Registro rápido</span><h1>Punto de venta</h1></div>
+  <span class="badge role">Sin manejo de efectivo</span>
+</div>
+
+<div class="pos-layout">
+  <section class="panel product-browser">
+    <div class="pos-search">
+      <input id="product-search" placeholder="Código o nombre del producto" autocomplete="off" autofocus>
+      <button id="search-btn" class="btn primary">Buscar</button>
+    </div>
+    <div id="results" class="product-results">
+      <div class="empty">Escribe para buscar productos activos</div>
+    </div>
+  </section>
+
+  <section class="panel ticket">
+    <div class="ticket-head">
+      <div><span class="eyebrow">Ticket actual</span><h2>Productos</h2></div>
+      <button id="clear-btn" class="btn ghost small">Limpiar</button>
+    </div>
+    <div id="ticket-items" class="ticket-items">
+      <div class="empty">Todavía no agregas productos</div>
+    </div>
+    <div class="ticket-total">
+      <span>Total informativo</span>
+      <strong id="total">$0.00</strong>
+    </div>
+    <button id="finish-btn" class="btn primary big" disabled>Registrar venta</button>
+    <p id="pos-message" class="pos-message"></p>
+  </section>
+</div>
+
+<script src="/js/pos.js"></script>
+<%- include('../partials/footer') %>

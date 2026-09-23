@@ -1,0 +1,33 @@
+<%- include('../partials/header', { title }) %>
+
+<div class="page-head">
+  <div><span class="eyebrow">Administración</span><h1>Empleados</h1></div>
+  <a class="btn primary" href="/usuarios/nuevo">+ Nuevo empleado</a>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th><th>Creado</th><th></th></tr></thead>
+    <tbody>
+      <% users.forEach((employee) => { %>
+        <tr>
+          <td><strong><%= employee.name %></strong></td>
+          <td><code><%= employee.username %></code></td>
+          <td><span class="badge role"><%= employee.role %></span></td>
+          <td><span class="badge <%= employee.active ? 'ok' : 'off' %>"><%= employee.active ? 'Activo' : 'Inactivo' %></span></td>
+          <td><%= new Date(employee.created_at + 'Z').toLocaleDateString('es-MX') %></td>
+          <td class="actions">
+            <a class="btn small" href="/usuarios/<%= employee.id %>/editar">Editar</a>
+            <% if (employee.id !== user.id) { %>
+              <form method="post" action="/usuarios/<%= employee.id %>/estado">
+                <button class="btn small ghost"><%= employee.active ? 'Desactivar' : 'Activar' %></button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

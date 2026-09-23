@@ -1,0 +1,32 @@
+{
+  "name": "pagouv2",
+  "version": "1.0.0",
+  "description": "Sistema escolar web de ventas e inventario PagoUv2",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "setup": "node src/database/setup.js",
+    "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "format": "prettier --write \"src/**/*.js\" \"public/**/*.{js,css}\" \"tests/**/*.js\" \"*.{json,md}\" \"docs/**/*.md\""
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.2.0",
+    "connect-sqlite3": "^0.9.16",
+    "dotenv": "^17.2.2",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "prettier": "^3.9.8",
+    "supertest": "^7.1.4"
+  }
+}

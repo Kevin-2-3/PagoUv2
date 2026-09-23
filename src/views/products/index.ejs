@@ -1,0 +1,43 @@
+<%- include('../partials/header', { title }) %>
+
+<div class="page-head">
+  <div><span class="eyebrow">Catálogo</span><h1>Productos</h1></div>
+  <% if (user.role === 'ADMINISTRADOR') { %>
+    <a class="btn primary" href="/productos/nuevo">+ Nuevo producto</a>
+  <% } %>
+</div>
+
+<form class="searchbar">
+  <input name="q" value="<%= q %>" placeholder="Buscar por código o nombre">
+  <button class="btn">Buscar</button>
+</form>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Código</th><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Estado</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% products.forEach((product) => { %>
+        <tr>
+          <td><code><%= product.code %></code></td>
+          <td><strong><%= product.name %></strong><small class="muted"><%= product.description %></small></td>
+          <td><%= product.category_name %></td>
+          <td><%= money(product.price_cents) %></td>
+          <td><span class="stock <%= product.stock <= 5 ? 'low' : '' %>"><%= product.stock %></span></td>
+          <td><span class="badge <%= product.active ? 'ok' : 'off' %>"><%= product.active ? 'Activo' : 'Inactivo' %></span></td>
+          <td class="actions">
+            <% if (user.role === 'ADMINISTRADOR') { %>
+              <a class="btn small" href="/productos/<%= product.id %>/editar">Editar</a>
+              <form method="post" action="/productos/<%= product.id %>/estado">
+                <button class="btn small ghost"><%= product.active ? 'Desactivar' : 'Activar' %></button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

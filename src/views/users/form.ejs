@@ -1,0 +1,30 @@
+<%- include('../partials/header', { title }) %>
+
+<div class="page-head">
+  <div><span class="eyebrow">Empleados</span><h1><%= employee ? 'Editar empleado' : 'Nuevo empleado' %></h1></div>
+  <a class="btn ghost" href="/usuarios">Volver</a>
+</div>
+
+<form class="panel form-grid" method="post">
+  <label>Nombre completo<input name="name" value="<%= employee?.name || '' %>" required></label>
+  <label>Usuario<input name="username" value="<%= employee?.username || '' %>" required></label>
+  <label>
+    Rol
+    <select name="role">
+      <% roles.forEach((role) => { %>
+        <option <%= employee?.role === role ? 'selected' : '' %>><%= role %></option>
+      <% }) %>
+    </select>
+  </label>
+  <label>
+    Contraseña <small><%= employee ? '(vacío para conservar)' : '' %></small>
+    <input type="password" name="password" <%= employee ? '' : 'required' %> minlength="8">
+  </label>
+  <label>
+    PIN de gerente <small>(solo al crear gerente; predeterminado 2468)</small>
+    <input name="pin" inputmode="numeric" maxlength="8">
+  </label>
+  <div class="full form-actions"><button class="btn primary">Guardar empleado</button></div>
+</form>
+
+<%- include('../partials/footer') %>

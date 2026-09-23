@@ -1,0 +1,47 @@
+<%- include('../partials/header', { title }) %>
+
+<div class="page-head">
+  <div>
+    <span class="eyebrow">Inventario</span>
+    <h1><%= product ? 'Editar producto' : 'Nuevo producto' %></h1>
+  </div>
+  <a class="btn ghost" href="/productos">Volver</a>
+</div>
+
+<form class="panel form-grid" method="post">
+  <label>
+    Código
+    <input name="code" value="<%= product?.code || '' %>" required>
+  </label>
+  <label>
+    Nombre
+    <input name="name" value="<%= product?.name || '' %>" required>
+  </label>
+  <label class="full">
+    Descripción
+    <textarea name="description"><%= product?.description || '' %></textarea>
+  </label>
+  <label>
+    Precio
+    <input type="number" name="price" min="0" step="0.01" value="<%= product ? (product.price_cents / 100).toFixed(2) : '' %>" required>
+  </label>
+  <label>
+    Existencias
+    <input type="number" name="stock" min="0" step="1" value="<%= product?.stock ?? 0 %>" required>
+  </label>
+  <label>
+    Categoría
+    <select name="category_id" required>
+      <% categories.forEach((category) => { %>
+        <option value="<%= category.id %>" <%= product?.category_id === category.id ? 'selected' : '' %>>
+          <%= category.name %>
+        </option>
+      <% }) %>
+    </select>
+  </label>
+  <div class="full form-actions">
+    <button class="btn primary">Guardar producto</button>
+  </div>
+</form>
+
+<%- include('../partials/footer') %>

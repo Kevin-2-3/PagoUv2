@@ -1,0 +1,33 @@
+<%- include('../partials/header', { title }) %>
+
+<div class="page-head">
+  <div><span class="eyebrow">Historial</span><h1>Ventas</h1></div>
+  <% if (['CAJERO', 'ADMINISTRADOR'].includes(user.role)) { %>
+    <a class="btn primary" href="/pdv">+ Nueva venta</a>
+  <% } %>
+</div>
+
+<form class="searchbar">
+  <input name="folio" value="<%= folio %>" placeholder="Buscar por folio">
+  <button class="btn">Buscar</button>
+</form>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Folio</th><th>Fecha</th><th>Cajero</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+      <% sales.forEach((sale) => { %>
+        <tr>
+          <td><code><%= sale.folio %></code></td>
+          <td><%= new Date(sale.created_at + 'Z').toLocaleString('es-MX') %></td>
+          <td><%= sale.cashier_name %></td>
+          <td><strong><%= money(sale.total_cents) %></strong></td>
+          <td><span class="badge <%= sale.status === 'COMPLETADA' ? 'ok' : 'off' %>"><%= sale.status %></span></td>
+          <td><a class="btn small" href="/ventas/<%= sale.id %>">Ver detalle</a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,52 @@
+<%- include('../partials/header', { title }) %>
+
+<div class="page-head">
+  <div><span class="eyebrow">Venta</span><h1><%= sale.folio %></h1></div>
+  <a class="btn ghost" href="/ventas">Volver</a>
+</div>
+
+<section class="detail-grid">
+  <article class="panel">
+    <div class="sale-meta">
+      <div><span>Fecha</span><strong><%= new Date(sale.created_at + 'Z').toLocaleString('es-MX') %></strong></div>
+      <div><span>Cajero</span><strong><%= sale.cashier_name %></strong></div>
+      <div><span>Estado</span><strong class="badge <%= sale.status === 'COMPLETADA' ? 'ok' : 'off' %>"><%= sale.status %></strong></div>
+      <div><span>Total informativo</span><strong><%= money(sale.total_cents) %></strong></div>
+    </div>
+    <table>
+      <thead><tr><th>Producto</th><th>Cant.</th><th>Unitario</th><th>Subtotal</th></tr></thead>
+      <tbody>
+        <% sale.details.forEach((detail) => { %>
+          <tr>
+            <td><%= detail.product_name %><small class="muted"><%= detail.product_code %></small></td>
+            <td><%= detail.quantity %></td>
+            <td><%= money(detail.unit_price_cents) %></td>
+            <td><%= money(detail.subtotal_cents) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </article>
+
+  <aside>
+    <% if (sale.cancellation) { %>
+      <article class="panel danger">
+        <h3>Venta cancelada</h3>
+        <p><b>Solicitó:</b> <%= sale.cancellation.requested_name %></p>
+        <p><b>Autorizó:</b> <%= sale.cancellation.authorized_name %></p>
+        <p><b>Motivo:</b> <%= sale.cancellation.reason || 'Sin motivo indicado' %></p>
+      </article>
+    <% } else if (['CAJERO', 'GERENTE'].includes(user.role)) { %>
+      <form method="post" action="/ventas/<%= sale.id %>/cancelar" class="panel stack">
+        <h3>Cancelar venta</h3>
+        <p class="muted">Requiere autorización de un gerente y restaura el inventario.</p>
+        <label>Usuario gerente<input name="manager_username" required></label>
+        <label>PIN<input type="password" name="manager_pin" required inputmode="numeric"></label>
+        <label>Motivo<textarea name="reason"></textarea></label>
+        <button class="btn danger-btn">Autorizar cancelación</button>
+      </form>
+    <% } %>
+  </aside>
+</section>
+
+<%- include('../partials/footer') %>

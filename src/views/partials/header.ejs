@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%= title %> · PagoUv2</title>
+    <link rel="stylesheet" href="/css/app.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/">
+        <span class="brand-mark">P2</span>
+        <span>PagoUv2<small>Ventas e inventario</small></span>
+      </a>
+      <nav>
+        <a href="/">Inicio</a>
+        <% if (['CAJERO', 'ADMINISTRADOR'].includes(user.role)) { %>
+          <a href="/pdv">Punto de venta</a>
+        <% } %>
+        <a href="/ventas">Ventas</a>
+        <% if (['GERENTE', 'ADMINISTRADOR'].includes(user.role)) { %>
+          <a href="/productos">Productos</a>
+        <% } %>
+        <% if (user.role === 'GERENTE') { %>
+          <a href="/usuarios">Empleados</a>
+        <% } %>
+      </nav>
+      <div class="user-chip">
+        <span><%= user.name %><small><%= user.role %></small></span>
+        <form method="post" action="/logout">
+          <button class="btn ghost small">Salir</button>
+        </form>
+      </div>
+    </header>
+    <main class="container">
+      <% if (message) { %>
+        <div class="alert <%= message.type %>"><%= message.text %></div>
+      <% } %>
