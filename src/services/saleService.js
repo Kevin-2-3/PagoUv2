@@ -2,7 +2,7 @@ const { getDb } = require("../database/db");
 const { AppError } = require("../utils/errors");
 const { authorizeManager } = require("./authService");
 
-function createSale(cashierId, rawItems) {
+function createSale(cashierId, rawItems, received) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw new AppError("El ticket está vacío");
   const quantities = new Map();
   for (const item of rawItems) {
@@ -24,10 +24,22 @@ function createSale(cashierId, rawItems) {
       details.push({ ...p, quantity, subtotal: p.price_cents * quantity });
     }
     const total = details.reduce((sum, d) => sum + d.subtotal, 0);
+    if (!/^(0|[1-9]\d{0,8})(\.\d{1,2})?$/.test(String(received ?? ""))) {
+      throw new AppError("Ingresa un monto recibido válido con máximo dos decimales");
+    }
+    const receivedCents = Math.round(Number(received) * 100);
+    if (receivedCents < total) {
+      throw new AppError(
+        `Efectivo insuficiente. Faltan $${((total - receivedCents) / 100).toFixed(2)}`,
+      );
+    }
+    const changeCents = receivedCents - total;
     const saleId = Number(
       db
-        .prepare("INSERT INTO sales(cashier_id,subtotal_cents,total_cents) VALUES (?,?,?)")
-        .run(cashierId, total, total).lastInsertRowid,
+        .prepare(
+          "INSERT INTO sales(cashier_id,subtotal_cents,total_cents,received_cents,change_cents) VALUES (?,?,?,?,?)",
+        )
+        .run(cashierId, total, total, receivedCents, changeCents).lastInsertRowid,
     );
     const folio = `PUV-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${String(saleId).padStart(6, "0")}`;
     db.prepare("UPDATE sales SET folio=? WHERE id=?").run(folio, saleId);
@@ -42,7 +54,7 @@ function createSale(cashierId, rawItems) {
         throw new AppError(`No fue posible reservar stock de ${d.name}`);
       addDetail.run(saleId, d.id, d.code, d.name, d.price_cents, d.quantity, d.subtotal);
     }
-    return { id: saleId, folio, total };
+    return { id: saleId, folio, total, receivedCents, changeCents };
   })();
 }
 function list(filters = {}) {

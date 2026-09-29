@@ -3,7 +3,7 @@ const { getDb } = require("../database/db");
 const { AppError } = require("../utils/errors");
 function login(username, password) {
   const user = getDb()
-    .prepare("SELECT * FROM users WHERE username = ?")
+    .prepare("SELECT * FROM users WHERE username = ? AND deleted_at IS NULL")
     .get(String(username || "").trim());
   if (!user || !bcrypt.compareSync(String(password || ""), user.password_hash))
     throw new AppError("Usuario o contraseña incorrectos", 401);
@@ -17,7 +17,9 @@ function login(username, password) {
 }
 function authorizeManager(username, pin) {
   const user = getDb()
-    .prepare("SELECT * FROM users WHERE username=? AND role='GERENTE' AND active=1")
+    .prepare(
+      "SELECT * FROM users WHERE username=? AND role='GERENTE' AND active=1 AND deleted_at IS NULL",
+    )
     .get(String(username || "").trim());
   if (
     !user ||

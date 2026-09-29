@@ -8,7 +8,13 @@
   <a class="btn ghost" href="/productos">Volver</a>
 </div>
 
-<form class="panel form-grid" method="post">
+<form class="panel form-grid" method="post" enctype="multipart/form-data">
+  <label class="full">
+    Imagen del producto
+    <img class="product-preview" src="<%= product ? '/productos/' + product.id + '/imagen' : '/images/default.webp' %>" alt="Imagen actual del producto">
+    <input type="file" name="image" accept="image/jpeg,image/png,image/webp">
+    <small>JPG, PNG o WebP · máximo 2 MB y 16 megapíxeles. Si no eliges otra imagen, se conserva la actual.</small>
+  </label>
   <label>
     Código
     <input name="code" value="<%= product?.code || '' %>" required>

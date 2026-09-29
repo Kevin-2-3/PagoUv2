@@ -41,6 +41,10 @@
         </tbody>
       </table>
       <div class="totals">
+        <% if (sale.received_cents !== null) { %>
+          <p>Efectivo recibido <strong><%= money(sale.received_cents) %></strong></p>
+          <p>Cambio <strong><%= money(sale.change_cents) %></strong></p>
+        <% } %>
         <p>Subtotal <strong><%= money(sale.subtotal_cents) %></strong></p>
         <p>Total <strong><%= money(sale.total_cents) %></strong></p>
       </div>

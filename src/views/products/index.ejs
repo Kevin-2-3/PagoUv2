@@ -21,13 +21,34 @@
       <% products.forEach((product) => { %>
         <tr>
           <td><code><%= product.code %></code></td>
-          <td><strong><%= product.name %></strong><small class="muted"><%= product.description %></small></td>
+          <td>
+            <img class="product-thumbnail" src="/productos/<%= product.id %>/imagen" alt="<%= product.name %>" loading="lazy">
+            <strong><%= product.name %></strong>
+            <small class="muted"><%= product.description %></small>
+          </td>
           <td><%= product.category_name %></td>
           <td><%= money(product.price_cents) %></td>
           <td><span class="stock <%= product.stock <= 5 ? 'low' : '' %>"><%= product.stock %></span></td>
           <td><span class="badge <%= product.active ? 'ok' : 'off' %>"><%= product.active ? 'Activo' : 'Inactivo' %></span></td>
           <td class="actions">
             <% if (user.role === 'ADMINISTRADOR') { %>
+              <details>
+                <summary class="btn small">+ Existencias</summary>
+                <form method="post" action="/productos/<%= product.id %>/existencias" class="stack">
+                  <label>Unidades a agregar
+                    <input type="number" name="quantity" min="1" max="1000000" step="1" required>
+                  </label>
+                  <button class="btn primary">Agregar existencias</button>
+                </form>
+              </details>
+              <details>
+                <summary class="btn small danger-btn">Eliminar</summary>
+                <form method="post" action="/productos/<%= product.id %>/eliminar" class="stack">
+                  <p>¿Eliminar <%= product.name %> del inventario? No podrá venderse. Su historial se conserva.</p>
+                  <button name="confirm" value="yes" class="btn danger-btn">Confirmar eliminación</button>
+                  <small>Cierra este panel para cancelar.</small>
+                </form>
+              </details>
               <a class="btn small" href="/productos/<%= product.id %>/editar">Editar</a>
               <form method="post" action="/productos/<%= product.id %>/estado">
                 <button class="btn small ghost"><%= product.active ? 'Desactivar' : 'Activar' %></button>

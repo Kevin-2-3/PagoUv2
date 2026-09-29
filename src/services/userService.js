@@ -4,11 +4,15 @@ const { AppError } = require("../utils/errors");
 const ROLES = ["GERENTE", "ADMINISTRADOR", "CAJERO"];
 function list() {
   return getDb()
-    .prepare("SELECT id,name,username,role,active,created_at FROM users ORDER BY name")
+    .prepare(
+      "SELECT id,name,username,role,active,created_at FROM users WHERE deleted_at IS NULL ORDER BY name",
+    )
     .all();
 }
 function get(id) {
-  return getDb().prepare("SELECT id,name,username,role,active FROM users WHERE id=?").get(id);
+  return getDb()
+    .prepare("SELECT id,name,username,role,active FROM users WHERE id=? AND deleted_at IS NULL")
+    .get(id);
 }
 function validate(data, creating) {
   const name = String(data.name || "").trim(),
@@ -71,4 +75,13 @@ function toggle(id, currentId) {
     .prepare("UPDATE users SET active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
     .run(u.active ? 0 : 1, id);
 }
-module.exports = { list, get, create, update, toggle, ROLES };
+function remove(id, currentId) {
+  if (Number(id) === Number(currentId)) throw new AppError("No puedes eliminar tu propia cuenta");
+  if (!get(id)) throw new AppError("Empleado no encontrado", 404);
+  getDb()
+    .prepare(
+      "UPDATE users SET active=0,deleted_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?",
+    )
+    .run(id);
+}
+module.exports = { list, get, create, update, toggle, remove, ROLES };

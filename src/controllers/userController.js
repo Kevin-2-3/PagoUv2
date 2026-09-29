@@ -1,4 +1,15 @@
 const users = require("../services/userService");
+const { AppError } = require("../utils/errors");
+exports.remove = (req, res, next) => {
+  try {
+    if (req.body.confirm !== "yes") throw new AppError("Confirma la eliminación del empleado");
+    users.remove(req.params.id, req.session.user.id);
+    req.flash("success", "Empleado eliminado. Sus ventas se conservan y su acceso fue revocado.");
+    res.redirect("/usuarios");
+  } catch (error) {
+    next(error);
+  }
+};
 exports.index = (req, res) =>
   res.render("users/index", { title: "Empleados", users: users.list() });
 exports.form = (req, res) =>

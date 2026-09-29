@@ -6,6 +6,24 @@
     finish = document.querySelector("#finish-btn"),
     msg = document.querySelector("#pos-message");
   const cart = new Map();
+  const received = document.querySelector("#received");
+  const cashFeedback = document.querySelector("#cash-feedback");
+  let submitting = false;
+  function updateCash() {
+    const total = [...cart.values()].reduce(
+      (sum, item) => sum + item.price_cents * item.quantity,
+      0,
+    );
+    const valid = /^(0|[1-9]\d{0,8})(\.\d{1,2})?$/.test(received.value);
+    const cents = valid ? Math.round(Number(received.value) * 100) : 0;
+    cashFeedback.textContent = !valid
+      ? "Ingresa un monto válido con máximo dos decimales."
+      : cents < total
+        ? `Efectivo insuficiente. Faltan ${money(total - cents)}`
+        : `Cambio a devolver: ${money(cents - total)}`;
+    finish.disabled = submitting || !cart.size || !valid || cents < total;
+  }
+  received.addEventListener("input", updateCash);
   const money = (c) =>
     new Intl.NumberFormat("es-MX", {
       style: "currency",
@@ -14,6 +32,7 @@
   function render() {
     const values = [...cart.values()];
     finish.disabled = !values.length;
+    updateCash();
     totalEl.textContent = money(values.reduce((s, x) => s + x.price_cents * x.quantity, 0));
     itemsEl.innerHTML = values.length
       ? values
@@ -47,7 +66,12 @@
       ? data
           .map(
             (p) =>
-              `<button class="product-card" data-product='${JSON.stringify(p).replaceAll("'", "&#39;")}'><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(p.code)} · ${p.stock} disponibles</small><span>${money(p.price_cents)}</span></button>`,
+              `<button class="product-card" data-product='${escapeHtml(JSON.stringify(p))}'>
+                <img src="/productos/${p.id}/imagen" alt="${escapeHtml(p.name)}" loading="lazy">
+                <strong>${escapeHtml(p.name)}</strong>
+                <small>${escapeHtml(p.code)} · ${p.stock} disponibles</small>
+                <span>${money(p.price_cents)}</span>
+              </button>`,
           )
           .join("")
       : '<div class="empty">No se encontraron productos</div>';
@@ -84,9 +108,13 @@
   });
   document.querySelector("#clear-btn").onclick = () => {
     cart.clear();
+    received.value = "";
     render();
   };
   finish.onclick = async () => {
+    updateCash();
+    if (finish.disabled) return;
+    submitting = true;
     finish.disabled = true;
     msg.textContent = "Registrando…";
     try {
@@ -94,6 +122,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          received: received.value,
           items: [...cart.values()].map((x) => ({
             productId: x.id,
             quantity: x.quantity,
@@ -103,13 +132,17 @@
       const data = await r.json();
       if (!r.ok) throw new Error(data.error);
       cart.clear();
+      received.value = "";
       render();
       msg.style.color = "var(--green)";
-      msg.innerHTML = `Venta <b>${escapeHtml(data.folio)}</b> registrada. <a href="/ventas/${data.id}">Ver detalle</a>`;
+      msg.innerHTML = `Venta <b>${escapeHtml(data.folio)}</b> registrada. <strong>Cambio a devolver: ${money(data.changeCents)}</strong>. <a href="/ventas/${data.id}">Ver detalle</a>`;
     } catch (e) {
       msg.style.color = "var(--red)";
       msg.textContent = e.message;
       render();
+    } finally {
+      submitting = false;
+      updateCash();
     }
   };
 })();

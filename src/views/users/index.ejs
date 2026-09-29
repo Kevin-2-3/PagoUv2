@@ -19,6 +19,14 @@
           <td class="actions">
             <a class="btn small" href="/usuarios/<%= employee.id %>/editar">Editar</a>
             <% if (employee.id !== user.id) { %>
+              <details>
+                <summary class="btn small danger-btn">Eliminar</summary>
+                <form method="post" action="/usuarios/<%= employee.id %>/eliminar" class="stack">
+                  <p>¿Eliminar a <%= employee.name %>? Perderá el acceso. Sus ventas se conservarán.</p>
+                  <button name="confirm" value="yes" class="btn danger-btn">Confirmar eliminación</button>
+                  <small>Cierra este panel para cancelar.</small>
+                </form>
+              </details>
               <form method="post" action="/usuarios/<%= employee.id %>/estado">
                 <button class="btn small ghost"><%= employee.active ? 'Desactivar' : 'Activar' %></button>
               </form>

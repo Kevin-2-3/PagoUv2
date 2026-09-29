@@ -7,11 +7,14 @@ Sistema  punto de venta, inventario y empleados para una tienda de conveniencia 
 - Inicio de sesión, sesiones persistentes y contraseñas con bcrypt.
 - Roles `GERENTE`, `ADMINISTRADOR` y `CAJERO`, protegidos en el servidor.
 - Catálogo con búsqueda, categorías, precio, stock y estado.
+- Visualizacion de productos con imagen de referencia
 - Punto de venta : búsqueda por código/nombre, cantidades y ticket.
 - Venta transaccional con validación de stock y folio único.
+- Manejo logico de efectivo
 - Historial y detalle de ventas.
 - Impresion de ticket de venta
 - Cancelación con usuario y PIN de gerente.
+- Eliminacion de empleados y productos
 - Administración de empleados, roles y cuentas activas.
 
 ## Tecnologías

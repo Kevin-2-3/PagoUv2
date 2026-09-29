@@ -2,6 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const { getDb, closeDb } = require("./db");
+const { migrateImages } = require("./productImages");
+const { migrateOperations } = require("./operationsMigration");
 
 function setupDatabase({ reset = false } = {}) {
   const db = getDb();
@@ -10,6 +12,8 @@ function setupDatabase({ reset = false } = {}) {
       "DROP TABLE IF EXISTS cash_cuts; DROP TABLE IF EXISTS sale_cancellations; DROP TABLE IF EXISTS sale_details; DROP TABLE IF EXISTS sales; DROP TABLE IF EXISTS cash_shifts; DROP TABLE IF EXISTS products; DROP TABLE IF EXISTS users; DROP TABLE IF EXISTS categories;",
     );
   db.exec(fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8"));
+  migrateImages(db);
+  migrateOperations(db);
   const existing = db.prepare("SELECT COUNT(*) count FROM users").get().count;
   if (existing) return;
 
@@ -77,6 +81,7 @@ function setupDatabase({ reset = false } = {}) {
     products.forEach((p) => addProduct.run(p[0], p[1], p[2], p[3], p[4], ids[p[5]]));
   });
   seed();
+  migrateImages(db);
 }
 
 if (require.main === module) {

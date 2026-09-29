@@ -3,6 +3,9 @@
 <div class="page-head">
   <div><span class="eyebrow">Venta</span><h1><%= sale.folio %></h1></div>
   <a class="btn ghost" href="/ventas">Volver</a>
+  <% if (sale.status === 'COMPLETADA') { %>
+    <a class="btn primary" href="/ventas/<%= sale.id %>/ticket">Imprimir ticket</a>
+  <% } %>
 </div>
 
 <section class="detail-grid">
@@ -14,6 +17,9 @@
       <div><span>Total informativo</span><strong><%= money(sale.total_cents) %></strong></div>
     </div>
     <table>
+      <% if (sale.received_cents !== null) { %>
+        <caption>Efectivo recibido: <%= money(sale.received_cents) %> · Cambio: <%= money(sale.change_cents) %></caption>
+      <% } %>
       <thead><tr><th>Producto</th><th>Cant.</th><th>Unitario</th><th>Subtotal</th></tr></thead>
       <tbody>
         <% sale.details.forEach((detail) => { %>

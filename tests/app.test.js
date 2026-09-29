@@ -78,7 +78,7 @@ test("venta válida descuenta stock y rechaza exceso", async () => {
     .expect(/Stock insuficiente/);
   const r = await a
     .post("/api/ventas")
-    .send({ items: [{ productId: p.id, quantity: 2 }] })
+    .send({ received: "100", items: [{ productId: p.id, quantity: 2 }] })
     .expect(201);
   assert.match(r.body.folio, /^PUV-/);
   assert.equal(
@@ -106,7 +106,7 @@ test("cancelación exige gerente y restaura inventario sin borrar venta", async 
   const sale = (
     await a
       .post("/api/ventas")
-      .send({ items: [{ productId: p.id, quantity: 3 }] })
+      .send({ received: "100", items: [{ productId: p.id, quantity: 3 }] })
       .expect(201)
   ).body;
   await a
@@ -163,6 +163,309 @@ test("las vistas principales se renderizan después del formateo", async () => {
     .get(`/ventas/${sale.id}`)
     .expect(200)
     .expect(/Detalle de venta/);
+});
+
+test("ticket contiene los datos y no modifica la venta ni el inventario", async () => {
+  const cashier = await login("cajero", "Cajero123!");
+  const sale = getDb().prepare("SELECT * FROM sales WHERE status='COMPLETADA' LIMIT 1").get();
+  const stock = getDb().prepare("SELECT id, stock FROM products ORDER BY id").all();
+  const response = await cashier.get(`/ventas/${sale.id}/ticket`).expect(200);
+  for (const label of [
+    sale.folio,
+    "Fecha",
+    "Producto",
+    "Cantidad",
+    "Precio",
+    "Subtotal",
+    "Total",
+  ]) {
+    assert.ok(response.text.includes(label));
+  }
+  assert.doesNotMatch(response.text, /impuestos|método de pago/i);
+  await cashier.get(`/ventas/${sale.id}/ticket`).expect(200);
+  assert.deepEqual(getDb().prepare("SELECT id, stock FROM products ORDER BY id").all(), stock);
+  const cancelled = getDb().prepare("SELECT id FROM sales WHERE status='CANCELADA' LIMIT 1").get();
+  await cashier.get(`/ventas/${cancelled.id}/ticket`).expect(400);
+  await request(app).get(`/ventas/${sale.id}/ticket`).expect(302);
+});
+
+test("impresión permite reintentar tras error del navegador", () => {
+  const vm = require("node:vm");
+  let click;
+  const button = {
+    addEventListener: (name, handler) => {
+      click = handler;
+    },
+  };
+  const status = {};
+  let attempts = 0;
+  vm.runInNewContext(fs.readFileSync("public/js/ticket.js", "utf8"), {
+    document: { querySelector: (selector) => (selector === "#print-ticket" ? button : status) },
+    window: {
+      print: () => {
+        attempts++;
+        throw new Error("Print unavailable");
+      },
+      addEventListener() {},
+    },
+  });
+  click();
+  assert.match(status.textContent, /No se pudo/);
+  assert.equal(button.textContent, "Reintentar impresión");
+  click();
+  assert.equal(attempts, 2);
+});
+
+test("carga PNG, JPG y WebP; edición conserva o sustituye la imagen", async () => {
+  const sharp = require("sharp");
+  const admin = await login("admin", "Admin123!");
+  const base = sharp({ create: { width: 10, height: 10, channels: 3, background: "red" } });
+  for (const format of ["png", "jpeg", "webp"]) {
+    const buffer = await base.clone().toFormat(format).toBuffer();
+    await admin
+      .post("/productos/nuevo")
+      .field("code", `IMG-${format}`)
+      .field("name", "Imagen prueba")
+      .field("price", "10")
+      .field("stock", "2")
+      .field("category_id", "1")
+      .attach("image", buffer, { filename: `product.${format}`, contentType: `image/${format}` })
+      .expect(302);
+    const product = getDb().prepare("SELECT * FROM products WHERE code=?").get(`IMG-${format}`);
+    const result = await admin
+      .get(`/productos/${product.id}/imagen`)
+      .expect(200)
+      .expect("Content-Type", /image\/webp/);
+    assert.equal((await sharp(result.body).metadata()).format, "webp");
+    await admin
+      .post(`/productos/${product.id}/editar`)
+      .type("form")
+      .send({ code: product.code, name: "Editado", price: "11", stock: "3", category_id: "1" })
+      .expect(302);
+    assert.deepEqual(
+      getDb().prepare("SELECT image_data FROM products WHERE id=?").get(product.id).image_data,
+      product.image_data,
+    );
+    const blue = await sharp({ create: { width: 8, height: 8, channels: 3, background: "blue" } })
+      .png()
+      .toBuffer();
+    await admin
+      .post(`/productos/${product.id}/editar`)
+      .field("code", product.code)
+      .field("name", "Nueva imagen")
+      .field("price", "10")
+      .field("stock", "2")
+      .field("category_id", "1")
+      .attach("image", blue, { filename: "new.png", contentType: "image/png" })
+      .expect(302);
+    assert.notDeepEqual(
+      getDb().prepare("SELECT image_data FROM products WHERE id=?").get(product.id).image_data,
+      product.image_data,
+    );
+  }
+});
+
+test("imágenes inválidas, falsas y grandes se rechazan sin cambiar el producto", async () => {
+  const admin = await login("admin", "Admin123!");
+  const product = getDb().prepare("SELECT * FROM products WHERE code='IMG-png'").get();
+  const cases = [
+    [Buffer.from("<svg></svg>"), "bad.svg", "image/svg+xml"],
+    [Buffer.from("not a picture"), "fake.png", "image/png"],
+    [Buffer.alloc(2 * 1024 * 1024 + 1), "big.jpg", "image/jpeg"],
+  ];
+  for (const [buffer, filename, contentType] of cases) {
+    await admin
+      .post(`/productos/${product.id}/editar`)
+      .field("code", product.code)
+      .field("name", "No guardar")
+      .field("price", "0")
+      .field("stock", "0")
+      .field("category_id", "1")
+      .attach("image", buffer, { filename, contentType })
+      .expect(400);
+    assert.deepEqual(getDb().prepare("SELECT * FROM products WHERE id=?").get(product.id), product);
+  }
+});
+
+test("imagen predeterminada, permisos y 20 imágenes demo persistentes", async () => {
+  const admin = await login("admin", "Admin123!");
+  const noImage = getDb().prepare("SELECT id FROM products WHERE code='TEST01'").get();
+  const fallback = await admin.get(`/productos/${noImage.id}/imagen`).expect(200);
+  assert.deepEqual(fallback.body, fs.readFileSync("public/images/default.webp"));
+  const cashier = await login("cajero", "Cajero123!");
+  await cashier.post(`/productos/${noImage.id}/editar`).expect(403);
+  const { demoImages, migrateImages } = require("../src/database/productImages");
+  const before = getDb().prepare("SELECT id,stock FROM products ORDER BY id").all();
+  migrateImages(getDb());
+  for (const code of Object.keys(demoImages)) {
+    assert.ok(
+      getDb().prepare("SELECT image_data FROM products WHERE code=?").get(code).image_data.length >
+        0,
+    );
+  }
+  assert.deepEqual(getDb().prepare("SELECT id,stock FROM products ORDER BY id").all(), before);
+  const Database = require("better-sqlite3");
+  const legacy = new Database(":memory:");
+  legacy.exec(
+    "CREATE TABLE products(id INTEGER PRIMARY KEY,code TEXT,stock INTEGER); INSERT INTO products VALUES(1,'BEB001',7)",
+  );
+  migrateImages(legacy);
+  assert.equal(legacy.prepare("SELECT stock FROM products").get().stock, 7);
+  assert.ok(legacy.prepare("SELECT image_data FROM products").get().image_data);
+  legacy.close();
+});
+
+test("efectivo insuficiente o inválido no registra ni descuenta; pago exacto y cambio persistentes", async () => {
+  const cashier = await login("cajero", "Cajero123!");
+  const p = getDb().prepare("SELECT * FROM products WHERE code='BEB001'").get();
+  const count = getDb().prepare("SELECT count(*) n FROM sales").get().n;
+  for (const received of [undefined, "", "-1", "1", "1.001", "NaN", "1e9"]) {
+    await cashier
+      .post("/api/ventas")
+      .send({ received, items: [{ productId: p.id, quantity: 1 }] })
+      .expect(400);
+  }
+  assert.equal(getDb().prepare("SELECT stock FROM products WHERE id=?").get(p.id).stock, p.stock);
+  assert.equal(getDb().prepare("SELECT count(*) n FROM sales").get().n, count);
+  const exact = await cashier
+    .post("/api/ventas")
+    .send({ received: (p.price_cents / 100).toFixed(2), items: [{ productId: p.id, quantity: 1 }] })
+    .expect(201);
+  assert.equal(exact.body.changeCents, 0);
+  const paid = await cashier
+    .post("/api/ventas")
+    .send({ received: "270", items: [{ productId: p.id, quantity: 1 }] })
+    .expect(201);
+  assert.equal(paid.body.changeCents, 27000 - p.price_cents);
+  const saved = getDb().prepare("SELECT * FROM sales WHERE id=?").get(paid.body.id);
+  assert.equal(saved.received_cents, 27000);
+  assert.equal(saved.change_cents, paid.body.changeCents);
+  await cashier
+    .get(`/ventas/${saved.id}/ticket`)
+    .expect(200)
+    .expect(/Cambio/);
+});
+
+test("eliminar empleado exige gerente y confirmación, revoca sesión y conserva ventas", async () => {
+  const manager = await login("gerente", "Gerente123!");
+  const admin = await login("admin", "Admin123!");
+  const users = require("../src/services/userService");
+  const id = Number(
+    users.create({
+      name: "Empleado temporal",
+      username: "temporal",
+      password: "Temporal123!",
+      role: "CAJERO",
+    }),
+  );
+  const employee = await login("temporal", "Temporal123!");
+  const sale = await employee
+    .post("/api/ventas")
+    .send({ received: "100", items: [{ productId: 1, quantity: 1 }] })
+    .expect(201);
+  await admin.post(`/usuarios/${id}/eliminar`).send({ confirm: "yes" }).expect(403);
+  await manager.post(`/usuarios/${id}/eliminar`).send({}).expect(400);
+  await manager.post(`/usuarios/${id}/eliminar`).send({ confirm: "yes" }).expect(302);
+  assert.ok(!users.list().some((u) => u.id === id));
+  await request(app)
+    .post("/login")
+    .type("form")
+    .send({ username: "temporal", password: "Temporal123!" })
+    .expect(401);
+  await employee.get("/pdv").expect(302);
+  await employee
+    .post("/api/ventas")
+    .send({ received: "100", items: [{ productId: 1, quantity: 1 }] })
+    .expect(401);
+  await manager.post(`/usuarios/${id}/estado`).expect(404);
+  await manager
+    .get(`/ventas/${sale.body.id}`)
+    .expect(200)
+    .expect(/Empleado temporal/);
+  const own = getDb().prepare("SELECT id FROM users WHERE username='gerente'").get();
+  await manager.post(`/usuarios/${own.id}/eliminar`).send({ confirm: "yes" }).expect(400);
+});
+
+test("agregar stock y eliminar producto mantienen historial y rechazan operaciones no válidas", async () => {
+  const admin = await login("admin", "Admin123!");
+  const cashier = await login("cajero", "Cajero123!");
+  const products = require("../src/services/productService");
+  const id = Number(
+    products.create({
+      code: "DELETE-TEST",
+      name: "Producto histórico",
+      price: "20",
+      stock: "3",
+      category_id: "1",
+    }),
+  );
+  await cashier.post(`/productos/${id}/existencias`).send({ quantity: 5 }).expect(403);
+  for (const quantity of [0, -1, 1.5, "", "abc"]) {
+    await admin.post(`/productos/${id}/existencias`).send({ quantity }).expect(400);
+  }
+  await admin.post(`/productos/${id}/existencias`).send({ quantity: 5 }).expect(302);
+  assert.equal(products.get(id).stock, 8);
+  const sale = await cashier
+    .post("/api/ventas")
+    .send({ received: "20", items: [{ productId: id, quantity: 1 }] })
+    .expect(201);
+  await admin.post(`/productos/${id}/eliminar`).send({}).expect(400);
+  await cashier.post(`/productos/${id}/eliminar`).send({ confirm: "yes" }).expect(403);
+  await admin.post(`/productos/${id}/eliminar`).send({ confirm: "yes" }).expect(302);
+  assert.ok(!products.list().some((p) => p.id === id));
+  await cashier
+    .post("/api/ventas")
+    .send({ received: "20", items: [{ productId: id, quantity: 1 }] })
+    .expect(400);
+  await admin.post(`/productos/${id}/estado`).expect(404);
+  await admin.post(`/productos/${id}/existencias`).send({ quantity: 5 }).expect(404);
+  await cashier
+    .get(`/ventas/${sale.body.id}`)
+    .expect(200)
+    .expect(/Producto histórico/);
+  await cashier
+    .post(`/ventas/${sale.body.id}/cancelar`)
+    .type("form")
+    .send({ manager_username: "gerente", manager_pin: "2468" })
+    .expect(302);
+  const historical = getDb().prepare("SELECT * FROM products WHERE id=?").get(id);
+  assert.equal(historical.stock, 8);
+  assert.equal(historical.active, 0);
+});
+
+test("migración conserva ventas antiguas sin inventar pagos", () => {
+  const Database = require("better-sqlite3");
+  const db = new Database(":memory:");
+  db.exec(
+    "CREATE TABLE users(id INTEGER); CREATE TABLE products(id INTEGER); CREATE TABLE sales(id INTEGER,total_cents INTEGER); INSERT INTO sales VALUES(1,2300)",
+  );
+  const { migrateOperations } = require("../src/database/operationsMigration");
+  migrateOperations(db);
+  migrateOperations(db);
+  const sale = db.prepare("SELECT * FROM sales").get();
+  assert.equal(sale.total_cents, 2300);
+  assert.equal(sale.received_cents, null);
+  assert.equal(sale.change_cents, null);
+  db.close();
+});
+
+test("todos los roles pueden consultar ventas ajenas y sus tickets", async () => {
+  const sale = getDb()
+    .prepare(
+      "SELECT s.* FROM sales s JOIN users u ON u.id=s.cashier_id WHERE u.deleted_at IS NOT NULL AND s.status='COMPLETADA' LIMIT 1",
+    )
+    .get();
+  for (const [username, password] of [
+    ["cajero", "Cajero123!"],
+    ["admin", "Admin123!"],
+    ["gerente", "Gerente123!"],
+  ]) {
+    const agent = await login(username, password);
+    const list = await agent.get("/ventas").expect(200);
+    assert.ok(list.text.includes(sale.folio));
+    await agent.get(`/ventas/${sale.id}`).expect(200);
+    await agent.get(`/ventas/${sale.id}/ticket`).expect(200);
+  }
 });
 
 test.after(() => closeDb());
