@@ -10,6 +10,7 @@ Sistema  punto de venta, inventario y empleados para una tienda de conveniencia 
 - Punto de venta : búsqueda por código/nombre, cantidades y ticket.
 - Venta transaccional con validación de stock y folio único.
 - Historial y detalle de ventas.
+- Impresion de ticket de venta
 - Cancelación con usuario y PIN de gerente.
 - Administración de empleados, roles y cuentas activas.
 
@@ -66,4 +67,3 @@ docs             documentación del proyecto
 - **Gerente:** panel, ventas, detalle/cancelación, empleados y consulta de productos.
 - **Administrador:** panel, punto de venta, ventas y administración completa de productos.
 - **Cajero:** panel, punto de venta, sus propias ventas y solicitud de cancelación autorizada.
-

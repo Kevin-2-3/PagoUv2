@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ticket <%= sale.folio %> · PagoUv2</title>
+    <link rel="stylesheet" href="/css/ticket.css">
+    <script src="/js/ticket.js" defer></script>
+  </head>
+  <body>
+    <nav class="controls" aria-label="Impresión">
+      <a href="/ventas/<%= sale.id %>">Volver a la venta</a>
+      <button id="print-ticket" type="button">Imprimir ticket</button>
+      <p id="print-status" role="status" aria-live="polite">
+        Selecciona tu impresora o guardar como PDF en el diálogo de impresión.
+      </p>
+    </nav>
+    <main class="receipt">
+      <h1>PagoUv2</h1>
+      <h2>Comprobante de venta</h2>
+      <p><strong>Número de venta:</strong> <%= sale.folio %></p>
+      <p><strong>Fecha:</strong> <%= new Date(sale.created_at + 'Z').toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) %></p>
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Importe</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% sale.details.forEach((detail) => { %>
+            <tr>
+              <td><%= detail.product_name %></td>
+              <td><%= detail.quantity %></td>
+              <td><%= money(detail.unit_price_cents) %></td>
+              <td><%= money(detail.subtotal_cents) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <div class="totals">
+        <p>Subtotal <strong><%= money(sale.subtotal_cents) %></strong></p>
+        <p>Total <strong><%= money(sale.total_cents) %></strong></p>
+      </div>
+    </main>
+  </body>
+</html>

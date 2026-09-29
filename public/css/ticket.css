@@ -1,0 +1,89 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font:
+    14px/1.5 system-ui,
+    sans-serif;
+  color: #172033;
+  background: #f4f7fb;
+}
+
+.controls,
+.receipt {
+  max-width: 640px;
+  margin: 0 auto 24px;
+}
+
+button {
+  margin-left: 16px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #635bff;
+  color: white;
+  cursor: pointer;
+}
+
+.receipt {
+  padding: 24px;
+  background: white;
+}
+
+h1,
+h2 {
+  text-align: center;
+}
+
+h2 {
+  font-size: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 8px 4px;
+  border-bottom: 1px dashed #bbb;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+
+.totals p {
+  display: flex;
+  justify-content: space-between;
+}
+
+@media print {
+  @page {
+    margin: 10mm;
+  }
+
+  body,
+  .receipt {
+    margin: 0;
+    padding: 0;
+    color: black;
+    background: white;
+  }
+
+  .controls {
+    display: none;
+  }
+
+  tr,
+  .totals {
+    break-inside: avoid;
+  }
+}
