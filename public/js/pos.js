@@ -1,3 +1,6 @@
+/**
+ * @file Carrito, búsqueda de productos y registro de ventas desde el navegador.
+ */
 (() => {
   const search = document.querySelector("#product-search"),
     results = document.querySelector("#results"),
@@ -7,13 +10,25 @@
     msg = document.querySelector("#pos-message");
   const cart = new Map();
   const received = document.querySelector("#received");
+  const paymentMethod = document.querySelector("#payment-method");
+  paymentMethod.addEventListener("change", updateCash);
   const cashFeedback = document.querySelector("#cash-feedback");
   let submitting = false;
+  /**
+   * Calcula el cambio, muestra la validación del efectivo y habilita el cobro cuando el carrito y el pago son válidos.
+   * @returns {void} No devuelve un valor.
+   */
   function updateCash() {
     const total = [...cart.values()].reduce(
       (sum, item) => sum + item.price_cents * item.quantity,
       0,
     );
+    document.querySelector("#received-label").hidden = paymentMethod.value === "TARJETA";
+    if (paymentMethod.value === "TARJETA") {
+      cashFeedback.textContent = "Pago simulado con tarjeta. No se realiza ningún cargo real.";
+      finish.disabled = submitting || !cart.size;
+      return;
+    }
     const valid = /^(0|[1-9]\d{0,8})(\.\d{1,2})?$/.test(received.value);
     const cents = valid ? Math.round(Number(received.value) * 100) : 0;
     cashFeedback.textContent = !valid
@@ -24,11 +39,20 @@
     finish.disabled = submitting || !cart.size || !valid || cents < total;
   }
   received.addEventListener("input", updateCash);
+  /**
+   * Da formato de pesos mexicanos a un importe en centavos.
+   * @param {number} c - Importe en centavos.
+   * @returns {string} Texto monetario.
+   */
   const money = (c) =>
     new Intl.NumberFormat("es-MX", {
       style: "currency",
       currency: "MXN",
     }).format(c / 100);
+  /**
+   * Actualiza las partidas, cantidades y total del carrito en pantalla.
+   * @returns {void} No devuelve un valor.
+   */
   function render() {
     const values = [...cart.values()];
     finish.disabled = !values.length;
@@ -38,11 +62,16 @@
       ? values
           .map(
             (x) =>
-              `<div class="ticket-row"><div><strong>${escapeHtml(x.name)}</strong><small class="muted">${escapeHtml(x.code)} · ${money(x.price_cents)}</small></div><div class="qty"><button data-act="minus" data-id="${x.id}">−</button><b>${x.quantity}</b><button data-act="plus" data-id="${x.id}" ${x.quantity >= x.stock ? "disabled" : ""}>+</button></div><button class="remove" data-act="remove" data-id="${x.id}">×</button></div>`,
+              `<div class="ticket-row"><div><strong>${escapeHtml(x.name)}</strong><small class="muted">${escapeHtml(x.code)} · ${money(x.price_cents)}${x.promotion_name ? ` · ${escapeHtml(x.promotion_name)} (antes ${money(x.original_price_cents)})` : ""}</small></div><div class="qty"><button data-act="minus" data-id="${x.id}">−</button><b>${x.quantity}</b><button data-act="plus" data-id="${x.id}" ${x.quantity >= x.stock ? "disabled" : ""}>+</button></div><button class="remove" data-act="remove" data-id="${x.id}">×</button></div>`,
           )
           .join("")
       : '<div class="empty">Todavía no agregas productos</div>';
   }
+  /**
+   * Escapa caracteres especiales antes de insertar texto en HTML.
+   * @param {*} s - Valor que se convierte a texto.
+   * @returns {string} Texto con caracteres HTML escapados.
+   */
   const escapeHtml = (s) =>
     String(s).replace(
       /[&<>'"]/g,
@@ -55,6 +84,11 @@
           '"': "&quot;",
         })[c],
     );
+  /**
+   * Busca productos activos por el texto ingresado y muestra sus precios e imágenes.
+   * @returns {Promise<void>} Se resuelve después de actualizar los resultados.
+   * @throws {Error} Si falla la consulta o la lectura de la respuesta.
+   */
   async function find() {
     const q = search.value.trim();
     if (!q) {
@@ -70,7 +104,7 @@
                 <img src="/productos/${p.id}/imagen" alt="${escapeHtml(p.name)}" loading="lazy">
                 <strong>${escapeHtml(p.name)}</strong>
                 <small>${escapeHtml(p.code)} · ${p.stock} disponibles</small>
-                <span>${money(p.price_cents)}</span>
+                <span>${money(p.price_cents)}${p.promotion_name ? ` · ${escapeHtml(p.promotion_name)}` : ""}</span>
               </button>`,
           )
           .join("")
@@ -122,6 +156,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          paymentMethod: paymentMethod.value,
           received: received.value,
           items: [...cart.values()].map((x) => ({
             productId: x.id,
@@ -135,7 +170,7 @@
       received.value = "";
       render();
       msg.style.color = "var(--green)";
-      msg.innerHTML = `Venta <b>${escapeHtml(data.folio)}</b> registrada. <strong>Cambio a devolver: ${money(data.changeCents)}</strong>. <a href="/ventas/${data.id}">Ver detalle</a>`;
+      msg.innerHTML = `Venta <b>${escapeHtml(data.folio)}</b> registrada. <strong>${data.paymentMethod === "TARJETA" ? "Pagada con tarjeta (simulada)" : `Cambio a devolver: ${money(data.changeCents)}`}</strong>. <a href="/ventas/${data.id}">Ver detalle</a> · <a href="/ventas/${data.id}/ticket">Comprobante</a>`;
     } catch (e) {
       msg.style.color = "var(--red)";
       msg.textContent = e.message;

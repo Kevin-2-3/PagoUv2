@@ -1,3 +1,6 @@
+/**
+ * @file Gestión de las imágenes de productos y sus datos de ejemplo.
+ */
 const fs = require("fs");
 const path = require("path");
 
@@ -24,6 +27,11 @@ const demoImages = {
   OTR001: "1F50B",
 };
 
+/**
+ * Añade la columna de imágenes y asigna imágenes locales a los productos de ejemplo que no tengan una.
+ * @param {import("better-sqlite3").Database} db - Conexión sobre la que se aplica la migración.
+ * @returns {void} No devuelve un valor.
+ */
 function migrateImages(db) {
   const columns = db.prepare("PRAGMA table_info(products)").all();
   if (!columns.some((column) => column.name === "image_data")) {

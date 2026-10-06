@@ -1,3 +1,6 @@
+/**
+ * @file Define las rutas HTTP y asigna los controles de sesión y permisos antes de los controladores.
+ */
 const express = require("express");
 const auth = require("../middleware/auth");
 const authC = require("../controllers/authController"),
@@ -29,6 +32,14 @@ r.get("/usuarios/:id/editar", auth.allowRoles("GERENTE"), users.form);
 r.post("/usuarios/nuevo", auth.allowRoles("GERENTE"), users.save);
 r.post("/usuarios/:id/editar", auth.allowRoles("GERENTE"), users.save);
 r.post("/usuarios/:id/estado", auth.allowRoles("GERENTE"), users.toggle);
+const commerce = require("../controllers/commerceController");
+r.get("/caja", auth.allowRoles("CAJERO", "ADMINISTRADOR"), commerce.cash);
+r.post("/caja/abrir", auth.allowRoles("CAJERO", "ADMINISTRADOR"), commerce.open);
+r.post("/caja/cerrar", auth.allowRoles("CAJERO", "ADMINISTRADOR"), commerce.close);
+r.get("/cortes", auth.allowRoles("GERENTE"), commerce.report);
+r.get("/promociones", auth.allowRoles("ADMINISTRADOR"), commerce.promotions);
+r.post("/promociones", auth.allowRoles("ADMINISTRADOR"), commerce.createPromotion);
+r.post("/promociones/:id/estado", auth.allowRoles("ADMINISTRADOR"), commerce.togglePromotion);
 r.get("/pdv", auth.allowRoles("CAJERO", "ADMINISTRADOR"), sales.pos);
 r.post("/api/ventas", auth.allowRoles("CAJERO", "ADMINISTRADOR"), sales.create);
 r.get("/ventas", sales.index);

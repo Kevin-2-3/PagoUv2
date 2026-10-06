@@ -14,17 +14,19 @@
       <div><span>Fecha</span><strong><%= new Date(sale.created_at + 'Z').toLocaleString('es-MX') %></strong></div>
       <div><span>Cajero</span><strong><%= sale.cashier_name %></strong></div>
       <div><span>Estado</span><strong class="badge <%= sale.status === 'COMPLETADA' ? 'ok' : 'off' %>"><%= sale.status %></strong></div>
+      <div><span>Pago</span><strong><%= sale.payment_method === "TARJETA" ? "Tarjeta (simulada)" : "Efectivo" %></strong></div>
+      <div><span>Descuento</span><strong><%= money(sale.subtotal_cents-sale.total_cents) %></strong></div>
       <div><span>Total informativo</span><strong><%= money(sale.total_cents) %></strong></div>
     </div>
     <table>
-      <% if (sale.received_cents !== null) { %>
+      <% if (sale.payment_method === 'EFECTIVO' && sale.received_cents !== null) { %>
         <caption>Efectivo recibido: <%= money(sale.received_cents) %> · Cambio: <%= money(sale.change_cents) %></caption>
       <% } %>
       <thead><tr><th>Producto</th><th>Cant.</th><th>Unitario</th><th>Subtotal</th></tr></thead>
       <tbody>
         <% sale.details.forEach((detail) => { %>
           <tr>
-            <td><%= detail.product_name %><small class="muted"><%= detail.product_code %></small></td>
+            <td><%= detail.product_name %><% if (detail.promotion_name) { %><small> · <%= detail.promotion_name %></small><% } %><small class="muted"><%= detail.product_code %></small></td>
             <td><%= detail.quantity %></td>
             <td><%= money(detail.unit_price_cents) %></td>
             <td><%= money(detail.subtotal_cents) %></td>

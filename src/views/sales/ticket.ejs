@@ -16,7 +16,7 @@
       </p>
     </nav>
     <main class="receipt">
-      <h1>PagoUv2</h1>
+      <img src="/images/pagouv2.png" alt="PagoUv2" width="180" height="45">
       <h2>Comprobante de venta</h2>
       <p><strong>Número de venta:</strong> <%= sale.folio %></p>
       <p><strong>Fecha:</strong> <%= new Date(sale.created_at + 'Z').toLocaleString('es-MX', { timeZone: 'America/Mexico_City' }) %></p>
@@ -32,7 +32,7 @@
         <tbody>
           <% sale.details.forEach((detail) => { %>
             <tr>
-              <td><%= detail.product_name %></td>
+              <td><%= detail.product_name %><% if (detail.promotion_name) { %><small> · <%= detail.promotion_name %></small><% } %></td>
               <td><%= detail.quantity %></td>
               <td><%= money(detail.unit_price_cents) %></td>
               <td><%= money(detail.subtotal_cents) %></td>
@@ -40,8 +40,10 @@
           <% }) %>
         </tbody>
       </table>
+      <p>Método: <%= sale.payment_method === "TARJETA" ? "Tarjeta (simulada), pagada" : "Efectivo, pagada" %></p>
       <div class="totals">
-        <% if (sale.received_cents !== null) { %>
+        <p>Descuento <strong><%= money(sale.subtotal_cents-sale.total_cents) %></strong></p>
+        <% if (sale.payment_method === 'EFECTIVO' && sale.received_cents !== null) { %>
           <p>Efectivo recibido <strong><%= money(sale.received_cents) %></strong></p>
           <p>Cambio <strong><%= money(sale.change_cents) %></strong></p>
         <% } %>

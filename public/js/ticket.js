@@ -1,3 +1,6 @@
+/**
+ * @file Gestiona la impresión del comprobante, sus mensajes y el reintento desde el navegador.
+ */
 (() => {
   const button = document.querySelector("#print-ticket");
   const status = document.querySelector("#print-status");

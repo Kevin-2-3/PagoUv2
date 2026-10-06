@@ -1,3 +1,11 @@
+/**
+ * @file Gestión de las columnas para bajas lógicas y cobros.
+ */
+/**
+ * Añade columnas de eliminación lógica, efectivo recibido y cambio si todavía no existen.
+ * @param {import("better-sqlite3").Database} db - Conexión sobre la que se aplica la migración.
+ * @returns {void} No devuelve un valor.
+ */
 function migrateOperations(db) {
   for (const [table, column, definition] of [
     ["users", "deleted_at", "TEXT"],

@@ -1,3 +1,6 @@
+/**
+ * @file Recibe una imagen JPG, PNG o WebP de hasta 2 MB, valida su contenido y la convierte a WebP para guardarla en req.productImage. Rechaza imágenes animadas o de más de 16 megapíxeles.
+ */
 const multer = require("multer");
 const sharp = require("sharp");
 const { AppError } = require("../utils/errors");
@@ -13,6 +16,13 @@ const upload = multer({
   },
 }).single("image");
 
+/**
+ * Procesa el archivo del campo image y entrega el búfer convertido en req.productImage.
+ * @param {import("express").Request} req - Solicitud con el archivo enviado.
+ * @param {import("express").Response} res - Respuesta HTTP.
+ * @param {import("express").NextFunction} next - Continúa o recibe un error de validación.
+ * @returns {void} No devuelve un valor; la continuación ocurre mediante next.
+ */
 module.exports = (req, res, next) => {
   upload(req, res, async (error) => {
     if (error) {

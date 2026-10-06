@@ -1,3 +1,6 @@
+/**
+ * @file Carga .env y expone el puerto, secreto de sesión, ruta de SQLite y modo de producción.
+ */
 const path = require("path");
 require("dotenv").config({ path: path.join(process.cwd(), ".env") });
 

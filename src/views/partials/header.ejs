@@ -9,19 +9,21 @@
   <body>
     <header class="topbar">
       <a class="brand" href="/">
-        <span class="brand-mark">P2</span>
-        <span>PagoUv2<small>Ventas e inventario</small></span>
+        <img class="brand-logo" src="/images/pagouv2.png" alt="PagoUv2">
       </a>
       <nav>
         <a href="/">Inicio</a>
         <% if (['CAJERO', 'ADMINISTRADOR'].includes(user.role)) { %>
+          <a href="/caja">Mi caja</a>
           <a href="/pdv">Punto de venta</a>
         <% } %>
+        <% if (user.role === "ADMINISTRADOR") { %><a href="/promociones">Promociones</a><% } %>
         <a href="/ventas">Ventas</a>
         <% if (['GERENTE', 'ADMINISTRADOR'].includes(user.role)) { %>
           <a href="/productos">Productos</a>
         <% } %>
         <% if (user.role === 'GERENTE') { %>
+          <a href="/cortes">Corte de caja</a>
           <a href="/usuarios">Empleados</a>
         <% } %>
       </nav>

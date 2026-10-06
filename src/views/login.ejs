@@ -1,36 +1,8 @@
 <!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Acceso · PagoUv2</title>
-    <link rel="stylesheet" href="/css/app.css">
-  </head>
-  <body class="login-page">
-    <section class="login-card">
-      <div class="login-logo">P2</div>
-      <h1>PagoUv2</h1>
-      <p>Control de ventas e inventario</p>
-      <% if (error) { %>
-        <div class="alert error"><%= error %></div>
-      <% } %>
-      <form method="post" action="/login" class="stack">
-        <label>
-          Usuario
-          <input name="username" autocomplete="username" required autofocus>
-        </label>
-        <label>
-          Contraseña
-          <input type="password" name="password" autocomplete="current-password" required>
-        </label>
-        <button class="btn primary" type="submit">Iniciar sesión</button>
-      </form>
-      <div class="demo">
-        <strong>Acceso de demostración</strong>
-        <span>gerente / Gerente123!</span>
-        <span>admin / Admin123!</span>
-        <span>cajero / Cajero123!</span>
-      </div>
-    </section>
-  </body>
-</html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Acceso · Mipago</title><link rel="stylesheet" href="/css/app.css"></head>
+<body class="login-page"><main class="login-shell">
+<section class="login-welcome"><img src="/images/pagouv2.png" alt="PagoUv2" class="login-brand"><span class="eyebrow">Operación de tienda</span><h1>Tu tienda.<br>Todo bajo control.</h1><p>Ventas, inventario y caja en un solo lugar.</p></section>
+<section class="login-card"><span class="eyebrow">Acceso al sistema</span><h2>Bienvenido</h2><p>Ingresa tus credenciales para comenzar tu jornada.</p>
+<% if (error) { %><div class="alert error" role="alert"><%= error %></div><% } %>
+<form method="post" action="/login" class="stack"><label>Usuario<input name="username" autocomplete="username" required autofocus placeholder="Tu usuario"></label><label>Contraseña<input type="password" name="password" autocomplete="current-password" required placeholder="Tu contraseña"></label><button class="btn primary big" type="submit">Iniciar sesión</button></form><p class="login-help">Acceso para personal autorizado de la tienda.</p></section>
+</main></body></html>

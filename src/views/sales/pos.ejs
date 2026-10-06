@@ -2,7 +2,7 @@
 
 <div class="page-head">
   <div><span class="eyebrow">Registro rápido</span><h1>Punto de venta</h1></div>
-  <span class="badge role">Pago en efectivo</span>
+  <span class="badge role">Turno #<%= shift.id %> · Fondo <%= money(shift.opening_cents) %></span>
 </div>
 
 <div class="pos-layout">
@@ -28,7 +28,8 @@
       <span>Total</span>
       <strong id="total">$0.00</strong>
     </div>
-    <label>Monto recibido
+    <label>Método de pago<select id="payment-method"><option value="EFECTIVO">Efectivo</option><option value="TARJETA">Tarjeta (simulada)</option></select></label>
+    <label id="received-label">Monto recibido
       <input id="received" type="number" min="0" max="999999999.99" step="0.01" placeholder="Ej. 270" inputmode="decimal">
     </label>
     <p id="cash-feedback" role="status" aria-live="polite">Ingresa el monto recibido.</p>

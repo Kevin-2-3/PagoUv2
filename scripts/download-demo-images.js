@@ -1,8 +1,16 @@
+/**
+ * @file Descarga y convierte las imágenes de ejemplo del inventario.
+ */
 const fs = require("fs/promises");
 const path = require("path");
 const sharp = require("sharp");
 const { demoImages } = require("../src/database/productImages");
 
+/**
+ * Descarga los iconos de ejemplo de OpenMoji, los convierte a WebP de 256 por 256 píxeles y guarda la imagen predeterminada.
+ * @returns {Promise<void>} Se resuelve al guardar todas las imágenes.
+ * @throws {Error} Si una descarga o conversión falla.
+ */
 async function main() {
   const destination = path.join(__dirname, "../public/images/demo");
   await fs.mkdir(destination, { recursive: true });

@@ -1,6 +1,16 @@
+/**
+ * @file Operaciones y validaciones de autenticación.
+ */
 const bcrypt = require("bcryptjs");
 const { getDb } = require("../database/db");
 const { AppError } = require("../utils/errors");
+/**
+ * Comprueba las credenciales y que la cuenta esté activa.
+ * @param {string} username - Nombre de usuario.
+ * @param {string} password - Contraseña ingresada.
+ * @returns {{id: number, name: string, username: string, role: string}} Datos del usuario para la sesión, sin hashes.
+ * @throws {AppError} Con estado 401 para credenciales incorrectas o 403 para cuenta inactiva.
+ */
 function login(username, password) {
   const user = getDb()
     .prepare("SELECT * FROM users WHERE username = ? AND deleted_at IS NULL")
@@ -15,6 +25,13 @@ function login(username, password) {
     role: user.role,
   };
 }
+/**
+ * Verifica el usuario y PIN de un gerente activo y no eliminado.
+ * @param {string} username - Usuario del gerente.
+ * @param {string} pin - PIN de autorización.
+ * @returns {Object} Registro del gerente que autoriza la operación.
+ * @throws {AppError} Si la autorización es inválida (403).
+ */
 function authorizeManager(username, pin) {
   const user = getDb()
     .prepare(

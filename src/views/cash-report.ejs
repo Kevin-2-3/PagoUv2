@@ -1,0 +1,12 @@
+<%- include('partials/header', { title }) %>
+<div class="page-head"><div><span class="eyebrow">Gerencia</span><h1>Corte de caja diario</h1></div></div>
+<form class="panel pos-search" method="get"><label>Fecha<input type="date" name="date" value="<%= report.date %>" required></label><button class="btn primary">Generar corte</button></form>
+<section class="panel"><h2>Ingresos del <%= report.date %></h2><p class="muted">Horario de Ciudad de México. Ventas completadas, sin cancelaciones ni fondos iniciales.</p>
+<table><thead><tr><th>Método de pago</th><th>Ventas</th><th>Ingresos</th></tr></thead><tbody>
+<% ['EFECTIVO','TARJETA'].forEach(method => { const row=report.payments.find(p => p.payment_method===method); %><tr><td><%= method==='TARJETA' ? 'Tarjeta (simulada)' : 'Efectivo' %></td><td><%= row?.count || 0 %></td><td><%= money(row?.total || 0) %></td></tr><% }) %>
+<tr><td colspan="2"><strong>Total de ingresos</strong></td><td><strong><%= money(report.payments.reduce((s,p) => s+p.total,0)) %></strong></td></tr></tbody></table></section>
+<section class="panel"><h2>Cuadre por turno</h2><p class="muted">Los turnos aparecen en su fecha de apertura. El cuadre incluye todas las ventas de cada turno, aunque termine otro día. Los turnos abiertos muestran cifras provisionales.</p>
+<div class="table-scroll"><table><thead><tr><th>Turno / Cajero</th><th>Estado</th><th>Fondo</th><th>Ventas efectivo</th><th>Tarjeta</th><th>Efectivo esperado</th><th>Contado</th><th>Diferencia</th></tr></thead><tbody>
+<% report.shifts.forEach(s => { %><tr><td>#<%= s.id %> · <%= s.cashier_name %></td><td><%= s.closed_at ? 'Cerrado' : 'Abierto' %></td><td><%= money(s.opening_cents) %></td><td><%= money(s.cash) %></td><td><%= money(s.card) %></td><td><%= money(s.closed_at ? s.expected_cents : s.opening_cents+s.cash) %></td><td><%= s.closed_at ? money(s.counted_cents) : 'Pendiente' %></td><td><%= s.closed_at ? money(s.counted_cents-s.expected_cents) : 'Pendiente' %></td></tr><% }) %>
+<% if (!report.shifts.length) { %><tr><td colspan="8">No hay turnos abiertos en esta fecha.</td></tr><% } %></tbody></table></div></section>
+<%- include('partials/footer') %>

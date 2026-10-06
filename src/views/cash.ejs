@@ -1,0 +1,14 @@
+<%- include('partials/header', { title }) %>
+<div class="page-head"><div><span class="eyebrow">Control de turno</span><h1>Mi caja</h1></div></div>
+<% if (!shift) { %>
+<form method="post" action="/caja/abrir" class="panel stack cash-form">
+<h2>Abrir turno</h2><p>Cuenta el efectivo disponible antes de comenzar. Este fondo se separa de las ventas.</p>
+<label>Fondo inicial (MXN)<input name="opening" type="number" min="0" max="999999999.99" step="0.01" required placeholder="500.00"></label>
+<button class="btn primary">Abrir caja y comenzar a vender</button></form>
+<% } else { %>
+<form method="post" action="/caja/cerrar" class="panel stack cash-form">
+<h2>Turno #<%= shift.id %> abierto</h2><p>Fondo inicial: <strong><%= money(shift.opening_cents) %></strong></p>
+<a class="btn primary" href="/pdv">Ir al punto de venta</a>
+<label>Efectivo físico al terminar (incluye el fondo)<input name="counted" type="number" min="0" max="999999999.99" step="0.01" required></label>
+<p class="muted">Cerrar el turno bloquea nuevas ventas y cancelaciones de este turno.</p><button class="btn ghost">Cerrar turno</button></form>
+<% } %><%- include('partials/footer') %>

@@ -1,3 +1,6 @@
+/**
+ * @file Configuración de la aplicación Express.
+ */
 const path = require("path");
 const express = require("express");
 const session = require("express-session");
@@ -8,6 +11,10 @@ const env = require("./config/env");
 const { setupDatabase } = require("./database/setup");
 const { money } = require("./utils/format");
 const { flash } = require("./middleware/flash");
+/**
+ * Inicializa la base de datos y configura vistas, sesiones, rutas y manejo de errores.
+ * @returns {import("express").Express} Aplicación lista para recibir solicitudes.
+ */
 function createApp() {
   setupDatabase();
   const app = express();

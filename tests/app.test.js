@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas de integración de acceso, permisos, inventario, ventas, caja, promociones e imágenes.
+ */
 const path = require("path");
 const fs = require("fs");
 const test = require("node:test");
@@ -15,9 +18,20 @@ for (const suffix of ["", "-wal", "-shm"]) {
 const { createApp } = require("../src/app");
 const { getDb, closeDb } = require("../src/database/db");
 const app = createApp();
+/**
+ * Crea un cliente de prueba con sesión y abre su caja si el usuario no es gerente y no tiene turno.
+ * @param {string} username - Usuario de prueba.
+ * @param {string} password - Contraseña de prueba.
+ * @returns {Promise<Object>} Cliente Supertest autenticado que conserva las cookies.
+ */
 async function login(username, password) {
   const agent = request.agent(app);
   await agent.post("/login").type("form").send({ username, password }).expect(302);
+  if (username !== "gerente") {
+    const user = getDb().prepare("SELECT id FROM users WHERE username=?").get(username);
+    if (!require("../src/services/cashService").current(user.id))
+      await agent.post("/caja/abrir").type("form").send({ opening: "500" }).expect(302);
+  }
   return agent;
 }
 test("login correcto e incorrecto", async () => {
@@ -468,4 +482,108 @@ test("todos los roles pueden consultar ventas ajenas y sus tickets", async () =>
   }
 });
 
+test("fondo, tarjeta simulada, promociones y cuadre diario", async () => {
+  const cash = require("../src/services/cashService");
+  const promo = require("../src/services/promotionService");
+  const db = getDb();
+  const user = db.prepare("SELECT * FROM users WHERE username='admin'").get();
+  if (cash.current(user.id)) cash.close(user.id, "500");
+  const agent = request.agent(app);
+  await agent
+    .post("/login")
+    .type("form")
+    .send({ username: "admin", password: "Admin123!" })
+    .expect(302)
+    .expect("Location", "/caja");
+  await agent.get("/pdv").expect(302).expect("Location", "/caja");
+  await agent
+    .post("/api/ventas")
+    .send({ items: [{ productId: 2, quantity: 1 }], paymentMethod: "TARJETA" })
+    .expect(400);
+  await agent.post("/caja/abrir").type("form").send({ opening: "-1" }).expect(400);
+  await agent.post("/caja/abrir").type("form").send({ opening: "500" }).expect(302);
+  await agent.post("/caja/abrir").type("form").send({ opening: "500" }).expect(400);
+  const shift = cash.current(user.id);
+  const product = db
+    .prepare(
+      "SELECT * FROM products WHERE active=1 AND deleted_at IS NULL AND stock>=4 ORDER BY id LIMIT 1",
+    )
+    .get();
+  const original = product.price_cents;
+  await agent
+    .post("/promociones")
+    .type("form")
+    .send({
+      name: "Descuento prueba",
+      percent: "25",
+      starts_on: promo.today(),
+      ends_on: promo.today(),
+      products: [String(product.id)],
+    })
+    .expect(302);
+  const price = Math.round(original * 0.75);
+  const search = await agent.get("/api/productos").query({ q: product.code }).expect(200);
+  assert.equal(search.body[0].price_cents, price);
+  const card = await agent
+    .post("/api/ventas")
+    .send({ items: [{ productId: product.id, quantity: 2 }], paymentMethod: "TARJETA" })
+    .expect(201);
+  assert.equal(card.body.total, price * 2);
+  assert.equal(card.body.changeCents, 0);
+  const sale = db.prepare("SELECT * FROM sales WHERE id=?").get(card.body.id);
+  assert.equal(sale.payment_method, "TARJETA");
+  assert.equal(sale.subtotal_cents, original * 2);
+  assert.equal(sale.shift_id, shift.id);
+  await agent
+    .get(`/ventas/${sale.id}/ticket`)
+    .expect(200)
+    .expect(/Tarjeta \(simulada\), pagada/)
+    .expect(/Descuento prueba/);
+  const paid = await agent
+    .post("/api/ventas")
+    .send({
+      items: [{ productId: product.id, quantity: 1 }],
+      received: "100",
+      paymentMethod: "EFECTIVO",
+    })
+    .expect(201);
+  assert.equal(paid.body.total, price);
+  await agent
+    .post("/api/ventas")
+    .send({
+      items: [{ productId: product.id, quantity: 1 }],
+      received: "100",
+      paymentMethod: "OTRO",
+    })
+    .expect(400);
+  const cashier = await login("cajero", "Cajero123!");
+  await cashier.get("/cortes").expect(403);
+  await cashier.post("/promociones").send({}).expect(403);
+  const manager = await login("gerente", "Gerente123!");
+  await manager
+    .get("/cortes")
+    .expect(200)
+    .expect(/Tarjeta \(simulada\)/);
+  await manager.get("/cortes?date=2026-02-30").expect(400);
+  await agent
+    .post("/caja/cerrar")
+    .type("form")
+    .send({ counted: String((50000 + price) / 100) })
+    .expect(302);
+  const closed = db.prepare("SELECT * FROM cash_shifts WHERE id=?").get(shift.id);
+  assert.equal(closed.expected_cents, 50000 + price);
+  assert.equal(closed.card_cents, price * 2);
+  assert.equal(closed.counted_cents - closed.expected_cents, 0);
+  await agent
+    .post("/api/ventas")
+    .send({ items: [{ productId: product.id, quantity: 1 }], paymentMethod: "TARJETA" })
+    .expect(400);
+  await manager
+    .post(`/ventas/${sale.id}/cancelar`)
+    .type("form")
+    .send({ manager_username: "gerente", manager_pin: "2468" })
+    .expect(400);
+  await agent.get("/promociones").expect(200);
+  await agent.get("/caja").expect(200);
+});
 test.after(() => closeDb());

@@ -1,6 +1,15 @@
+/**
+ * @file Controladores HTTP para ventas y comprobantes.
+ */
 const sales = require("../services/saleService");
 const { AppError } = require("../utils/errors");
 
+/**
+ * Muestra un comprobante sin caché únicamente para una venta completada. Envía los errores al manejador central.
+ * @param {import("express").Request} req - Solicitud HTTP, con sesión, parámetros y datos enviados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para mostrar una vista, redirigir o enviar JSON.
+ * @param {import("express").NextFunction} next - Continúa la solicitud o envía el error al manejador central.
+ */
 exports.ticket = (req, res, next) => {
   try {
     const sale = sales.get(req.params.id);
@@ -13,15 +22,40 @@ exports.ticket = (req, res, next) => {
     next(error);
   }
 };
-exports.pos = (req, res) => res.render("sales/pos", { title: "Punto de venta" });
+/**
+ * Muestra el punto de venta o dirige a caja si falta abrir un turno.
+ * @param {import("express").Request} req - Solicitud HTTP, con sesión, parámetros y datos enviados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para mostrar una vista, redirigir o enviar JSON.
+ */
+exports.pos = (req, res) => {
+  const shift = require("../services/cashService").current(req.session.user.id);
+  if (!shift) return res.redirect("/caja");
+  res.render("sales/pos", { title: "Punto de venta", shift });
+};
+/**
+ * Registra la venta de la sesión y devuelve su resumen como JSON con estado 201. Envía los errores al manejador central.
+ * @param {import("express").Request} req - Solicitud HTTP, con sesión, parámetros y datos enviados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para mostrar una vista, redirigir o enviar JSON.
+ * @param {import("express").NextFunction} next - Continúa la solicitud o envía el error al manejador central.
+ */
 exports.create = (req, res, next) => {
   try {
-    const result = sales.createSale(req.session.user.id, req.body.items, req.body.received);
+    const result = sales.createSale(
+      req.session.user.id,
+      req.body.items,
+      req.body.received,
+      req.body.paymentMethod,
+    );
     res.status(201).json({ ok: true, ...result });
   } catch (e) {
     next(e);
   }
 };
+/**
+ * Muestra las ventas filtradas por folio.
+ * @param {import("express").Request} req - Solicitud HTTP, con sesión, parámetros y datos enviados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para mostrar una vista, redirigir o enviar JSON.
+ */
 exports.index = (req, res) =>
   res.render("sales/index", {
     title: "Ventas",
@@ -30,6 +64,12 @@ exports.index = (req, res) =>
     }),
     folio: req.query.folio || "",
   });
+/**
+ * Muestra las partidas y datos de una venta. Envía los errores al manejador central.
+ * @param {import("express").Request} req - Solicitud HTTP, con sesión, parámetros y datos enviados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para mostrar una vista, redirigir o enviar JSON.
+ * @param {import("express").NextFunction} next - Continúa la solicitud o envía el error al manejador central.
+ */
 exports.show = (req, res, next) => {
   try {
     res.render("sales/show", {
@@ -40,6 +80,12 @@ exports.show = (req, res, next) => {
     next(e);
   }
 };
+/**
+ * Cancela la venta con autorización de gerente y confirma la restauración del inventario. Envía los errores al manejador central.
+ * @param {import("express").Request} req - Solicitud HTTP, con sesión, parámetros y datos enviados.
+ * @param {import("express").Response} res - Respuesta HTTP utilizada para mostrar una vista, redirigir o enviar JSON.
+ * @param {import("express").NextFunction} next - Continúa la solicitud o envía el error al manejador central.
+ */
 exports.cancel = (req, res, next) => {
   try {
     sales.cancelSale(

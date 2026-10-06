@@ -3,8 +3,8 @@
   --surface: #fff;
   --ink: #142033;
   --muted: #68758a;
-  --primary: #635bff;
-  --primary2: #4338ca;
+  --primary: #005ba8;
+  --primary2: #00467f;
   --line: #dfe5ee;
   --green: #0b9b6d;
   --red: #d43c54;
@@ -63,7 +63,7 @@ textarea {
 }
 .topbar {
   height: 76px;
-  background: #10182a;
+  background: #00467f;
   color: #fff;
   display: flex;
   align-items: center;
@@ -84,7 +84,7 @@ textarea {
 .login-logo {
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #8b7cff, var(--primary));
+  background: linear-gradient(135deg, #00b45b, var(--primary));
   color: #fff;
   border-radius: 13px;
   font-weight: 900;
@@ -113,7 +113,7 @@ textarea {
   color: #ced5e1;
 }
 .topbar nav a:hover {
-  background: #212c42;
+  background: #005ba8;
   color: #fff;
 }
 .user-chip {
@@ -136,7 +136,7 @@ textarea {
   gap: 20px;
 }
 .hero {
-  background: linear-gradient(120deg, #171f34, #282557);
+  background: linear-gradient(120deg, #00467f, #005ba8);
   color: #fff;
   padding: 34px;
   border-radius: 22px;
@@ -157,7 +157,7 @@ textarea {
   letter-spacing: 0.13em;
   font-size: 11px;
   font-weight: 800;
-  color: #7d73ff;
+  color: #005ba8;
 }
 .btn {
   border: 1px solid var(--line);
@@ -254,8 +254,8 @@ textarea {
   gap: 13px;
 }
 .quick-grid a:hover {
-  border-color: #aaa3ff;
-  background: #faf9ff;
+  border-color: #8ab9db;
+  background: #f1f8fb;
 }
 .quick-grid b {
   font-size: 26px;
@@ -340,8 +340,8 @@ tr:last-child td {
   background: #ffe6ea;
 }
 .badge.role {
-  color: #4a43b6;
-  background: #ebeaff;
+  color: #005ba8;
+  background: #e5f2fa;
 }
 .stock {
   font-weight: 800;
@@ -379,7 +379,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px #635bff1b;
+  box-shadow: 0 0 0 3px #005ba81b;
 }
 textarea {
   min-height: 90px;
@@ -414,7 +414,7 @@ textarea {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle at top right, #6d63ff 0, #202849 38%, #101625 100%);
+  background: radial-gradient(circle at top right, #00b45b 0, #005ba8 38%, #00355f 100%);
   padding: 20px;
 }
 .login-card {
@@ -479,7 +479,7 @@ textarea {
 }
 .product-card:hover {
   border-color: var(--primary);
-  background: #faf9ff;
+  background: #f1f8fb;
 }
 .product-card strong,
 .product-card span {
@@ -629,3 +629,139 @@ textarea {
     font-size: 28px;
   }
 }
+
+.brand-logo {
+  width: 157px;
+  height: 45px;
+  object-fit: contain;
+  background: white;
+  border-radius: 5px;
+  padding: 2px;
+}
+.topbar {
+  height: auto;
+  min-height: 76px;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-bottom: 4px solid #00b45b;
+}
+.login-page {
+  background: #edf4f7;
+}
+.login-shell {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  width: min(980px, 100%);
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 70px #00355f24;
+}
+.login-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 56px 44px;
+  color: white;
+  background: linear-gradient(145deg, #00467f, #005ba8);
+  border-bottom: 8px solid #00b45b;
+}
+.login-brand {
+  width: 220px;
+  max-width: 100%;
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 64px;
+}
+.login-welcome .eyebrow {
+  color: #91f3c1;
+}
+.login-welcome h1 {
+  font-size: 40px;
+  line-height: 1.15;
+  margin: 14px 0;
+}
+.login-welcome p {
+  color: #e1edf5;
+}
+.login-feature {
+  margin-top: 28px;
+  line-height: 2;
+}
+.login-footer {
+  margin-top: 64px;
+  font-size: 12px;
+  color: #c4deed;
+}
+.login-shell .login-card {
+  width: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 70px 42px;
+  align-self: center;
+}
+.login-card h2 {
+  font-size: 30px;
+  margin: 10px 0;
+}
+.login-help {
+  font-size: 13px;
+  margin-top: 26px !important;
+}
+.cash-form {
+  max-width: 640px;
+}
+.promotion-products {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  max-height: 300px;
+  overflow: auto;
+}
+.check-product {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.check-product input {
+  width: auto;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 700px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+  .login-welcome {
+    padding: 28px;
+  }
+  .login-brand {
+    margin-bottom: 24px;
+    width: 180px;
+  }
+  .login-welcome h1 {
+    font-size: 30px;
+  }
+  .login-feature,
+  .login-footer {
+    display: none;
+  }
+  .login-shell .login-card {
+    padding: 32px 28px;
+  }
+}
+
+.promotion-product { padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); cursor:pointer; }
+.promotion-product:has(input:checked) { border-color:var(--primary); background:#e5f2fa; }
+.promotion-product img { width:48px; height:48px; object-fit:contain; }
+.promotion-product small { display:block; margin-top:3px; }
+
+.hero .eyebrow { color: #91f3c1; }
+.hero .btn.primary { border: 2px solid #fff; }

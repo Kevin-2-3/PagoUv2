@@ -1,19 +1,30 @@
+/**
+ * @file Gestión de la creación e inicialización de la base de datos.
+ */
 const fs = require("fs");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const { getDb, closeDb } = require("./db");
 const { migrateImages } = require("./productImages");
+const { migrateCommerce } = require("./commerceMigration");
 const { migrateOperations } = require("./operationsMigration");
 
+/**
+ * Crea el esquema, aplica las migraciones y carga datos iniciales cuando no hay usuarios. Si reset es true, elimina las tablas antes de recrearlas.
+ * @param {Object} [options={}] - Opciones de inicialización.
+ * @param {boolean} [options.reset=false] - Indica si se borran los datos existentes.
+ * @returns {void} No devuelve un valor.
+ */
 function setupDatabase({ reset = false } = {}) {
   const db = getDb();
   if (reset)
     db.exec(
-      "DROP TABLE IF EXISTS cash_cuts; DROP TABLE IF EXISTS sale_cancellations; DROP TABLE IF EXISTS sale_details; DROP TABLE IF EXISTS sales; DROP TABLE IF EXISTS cash_shifts; DROP TABLE IF EXISTS products; DROP TABLE IF EXISTS users; DROP TABLE IF EXISTS categories;",
+      "DROP TABLE IF EXISTS promotion_products; DROP TABLE IF EXISTS promotions; DROP TABLE IF EXISTS cash_cuts; DROP TABLE IF EXISTS sale_cancellations; DROP TABLE IF EXISTS sale_details; DROP TABLE IF EXISTS sales; DROP TABLE IF EXISTS cash_shifts; DROP TABLE IF EXISTS products; DROP TABLE IF EXISTS users; DROP TABLE IF EXISTS categories;",
     );
   db.exec(fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8"));
   migrateImages(db);
   migrateOperations(db);
+  migrateCommerce(db);
   const existing = db.prepare("SELECT COUNT(*) count FROM users").get().count;
   if (existing) return;
 
